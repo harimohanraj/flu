@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<head>
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.css" />
+	<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+	<link rel="stylesheet" href="lib/leaflet.awesome-markers.css">
+	<link rel="stylesheet" href="lib/default.css">
+	<link rel="stylesheet" href="lib/default.date.css">
+
+</head>
+
+<style>
+
+	html, body, #map {
+		height: 100%;
+		width: 100%;
+		padding: 0px;
+		margin: 0px;
+	}
+	#loading { 
+		position:fixed;
+        top:0;
+        left:0;
+        width:100%;
+        height:100%;
+        background-color:#666;
+        color:#fff;
+        font-size:2em;
+        padding:20% 40%;
+        z-index:10;
+       	}
+    .about {
+    	padding: 6px 8px;
+    	color: grey;
+    	font: 14px helvetica, sans-serif;
+    	background: white;
+    	background: rgba(255,255,255,0.8);
+    	box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    	border-radius: 5px;
+    	width: 250px;
+    }
+    .about span {
+    	font-weight: bolder;
+    }
+    .bluemark {
+    	color: blue;
+    }
+    .redmark {
+    	color: red;
+    }
+    .time_date {
+    	padding: 6px 8px;
+    	color: grey;
+    	font: 25px helvetica, sans-serif;
+    	background:white;
+    	background: rgba(255,255,255,0.8);
+    	box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    	border-radius: 5px;
+    	width: 250px;
+    	font-weight: bolder;
+    	text-align: center;
+    }
+
+</style>
+
+<script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
+<script src="js/leaflet.geocsv-src.js"></script>
+<script src="js/jquery.js"></script>
+<script src="http://www.merkwelt.com/people/stan/geo_js/js/geo.js?id=1" type="text/javascript" charset="utf-8"></script>
+<script src="js/gears_init.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/leaflet.awesome-markers.js"></script>
+<script src="js/picker.js"></script>
+<script src="js/picker.date.js"></script>
+<script src="flu.js"></script>
+
+<body onLoad="javascript:init();">
+	<div id="map"></div>
+	<div id="loading">Loading...</div>
+</body>
+
+</html>
