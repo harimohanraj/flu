@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<head>
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.css" />
+	<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+	<link rel="stylesheet" href="leaflet.awesome-markers.css">
+	<link rel="stylesheet" href="default.css">
+	<link rel="stylesheet" href="default.date.css">
+
+</head>
+
+<style>
+
+	html, body, #map {
+		height: 100%;
+		width: 100%;
+		padding: 0px;
+		margin: 0px;
+	}
+	#loading { 
+		position:fixed;
+        top:0;
+        left:0;
+        width:100%;
+        height:100%;
+        background-color:#666;
+        color:#fff;
+        font-size:2em;
+        padding:20% 40%;
+        z-index:10;
+       	}
+    .about {
+    	padding: 6px 8px;
+    	color: grey;
+    	font: 14px helvetica, sans-serif;
+    	background: white;
+    	background: rgba(255,255,255,0.8);
+    	box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    	border-radius: 5px;
+    	width: 250px;
+    }
+    .about span {
+    	font-weight: bolder;
+    }
+    .bluemark {
+    	color: blue;
+    }
+    .redmark {
+    	color: red;
+    }
+    .time_date {
+    	padding: 6px 8px;
+    	color: grey;
+    	font: 25px helvetica, sans-serif;
+    	background:white;
+    	background: rgba(255,255,255,0.8);
+    	box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    	border-radius: 5px;
+    	width: 250px;
+    	font-weight: bolder;
+    	text-align: center;
+    }
+
+</style>
+
+<script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
+<script src="leaflet.geocsv-src.js"></script>
+<script src="jquery.js"></script>
+<script src="http://www.merkwelt.com/people/stan/geo_js/js/geo.js?id=1" type="text/javascript" charset="utf-8"></script>
+<script src="gears_init.js" type="text/javascript" charset="utf-8"></script>
+<script src="leaflet.awesome-markers.js"></script>
+<script src="picker.js"></script>
+<script src="picker.date.js"></script>
+<script>
+	function init() {
+		$('#datepicker').pickadate();
+		// Creates map, grabs map tiles from CloudMade
+		var map = L.map('map').setView([39.95,-75.17],12);
+		L.tileLayer('http://{s}.tile.cloudmade.com/key/998/256/{z}/{x}/{y}.png', 
+			{attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>',
+    		maxZoom: 18
+		}).addTo(map);
+
+		// Creates empty variable to contain output of geoCSV conversion
+		// Creates and binds popups with info to each marker
+		// Filters markers based on dates
+		var locations = L.geoCsv(null,{
+			lineSeparator: "\n",
+			fieldSeparator: ',',
+			firstLineTitles: true,
+			onEachFeature: function (feature, layer) {
+				var popup = '';
+				popup = '<b>'+'Name:'+'</b>'+'<br />'+feature.properties.facility_name+'<br />'+'<b>'+'Address:'+'</b>'+'<br />'+feature.properties.street1+'<br />'+feature.properties.city+', '+feature.properties.state+' '+feature.properties.postal_code + '<br />' + '<b>'+'Hours:'+'</b>'+'<br />'+feature.properties.begin_time+'-'+feature.properties.end_time+'<br />'+'<b>'+'Phone:'+'</b>'+'<br />'+feature.properties.phone+'<br />'+'<b>'+'Website:'+'</b>'+'<br />'+'<a href="'+feature.properties.url+'">'+'Click here!'+'</a>';
+				layer.bindPopup(popup);
+		
+			},
+			filter: function (feature, layer) {
+				today = new Date();
+				today.setHours(0,0,0,0);
+				rawStartDate = feature.properties.begin_date.split("-");
+				rawEndDate = feature.properties.end_date.split("-");
+				var startDate = new Date(rawStartDate[0],rawStartDate[1]-1,rawStartDate[2]);
+				var endDate = new Date(rawEndDate[0],rawEndDate[1]-1,rawEndDate[2]);
+
+				if(startDate.getTime() <= today.getTime() && today.getTime() <= endDate.getTime()){
+					return true;
+				}
+			}
+		});
+
+		// AJAX "GET" call to load flu data csv 
+		$.ajax ({
+				type: 'GET',
+				dataType: 'text',
+				url: 'locations.csv',
+				error: function() {
+					alert('Cannot load flu shot locations.');
+				},
+				success: function(csv) {
+					locations.addData(csv);
+					map.addLayer(locations);
+				},
+				complete: function() {
+					$('#loading').delay(500).fadeOut('slow');
+				}
+		});
+
+		// Grabs user location if available, creates marker 
+		if(geo_position_js.init()){
+			geo_position_js.getCurrentPosition(success_callback,error_callback,{enableHighAccuracy:true});
+		}
+		else{
+			alert("Cannot find user location.");
+		}
+		function success_callback(p)
+		{
+			var homeMarker = L.AwesomeMarkers.icon({
+				icon: 'medkit',
+				markerColor: 'red'
+			});
+			var userloc = L.marker([p.coords.latitude,p.coords.longitude], {icon: homeMarker}).addTo(map);
+			userloc.bindPopup("You are here.").openPopup();
+		}
+		function error_callback(p)
+		{
+			alert('error='+p.code);
+		}	
+
+		// Adds floating information box
+		var about = L.control();
+		about.onAdd = function(map) {
+			this._div = L.DomUtil.create('div','about'); // Create a div with class "about"
+			this._div.innerHTML = '<span>Today\'s Free Flu Shots in Philly</span> <br /><ul><li>This map displays the locations for free flu shots provided to residents of Philadelphia today.</li> <li> <span class="bluemark">Blue markers</span> indicate clinic locations, and the <span class="redmark">red marker</span> indicates your location.</li> <li> Click on the <span class="bluemark">blue markers</span> for more information about that specific clinic.</li>' ;
+			return this._div;
+		};
+		about.addTo(map);
+
+		// Adds floating time and date box
+		var time_date = L.control();
+		time_date.onAdd = function(map){
+			today = new Date();
+			this._div = L.DomUtil.create('div','time_date');
+			this._div.innerHTML = 'Today is '+today.toLocaleDateString()+'.'+'<br />'+'It is '+today.toLocaleTimeString()+'.';
+			return this._div;
+		}
+		time_date.addTo(map);
+	}
+</script>
+
+<body onLoad="javascript:init();">
+	<div id="map"></div>
+	<div id="loading">Loading...</div>
+</body>
+
+</html>
